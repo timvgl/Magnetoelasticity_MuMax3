@@ -78,12 +78,12 @@ func SaveAs(q Quantity, fname string) {
 // Save image once, with auto file name
 func Snapshot(q Quantity) {
 	qname := NameOf(q)
-	fname := fmt.Sprintf(OD()+FilenameFormat+"."+SnapshotFormat, qname, autonum[qname])
+	fname := fmt.Sprintf(OD()+FilenameFormat+"."+SnapshotFormat, qname, autonumSnapshots[qname])
 	s := ValueOf(q)
 	defer cuda.Recycle(s)
 	data := s.HostCopy() // must be copy (asyncio)
 	queOutput(func() { snapshot_sync(fname, data) })
-	autonum[qname]++
+	autonumSnapshots[qname]++
 }
 
 func SnapshotAs(q Quantity, fname string) {
