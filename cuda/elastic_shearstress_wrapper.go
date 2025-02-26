@@ -87,25 +87,19 @@ func k_Shearstress_async(sxy unsafe.Pointer, syz unsafe.Pointer, szx unsafe.Poin
 
 // maps compute capability on PTX code for Shearstress kernel.
 var Shearstress_map = map[int]string{0: "",
-	30: Shearstress_ptx_30,
-	32: Shearstress_ptx_32,
-	35: Shearstress_ptx_35,
-	37: Shearstress_ptx_37,
 	50: Shearstress_ptx_50,
 	52: Shearstress_ptx_52,
 	53: Shearstress_ptx_53,
 	60: Shearstress_ptx_60,
 	61: Shearstress_ptx_61,
 	62: Shearstress_ptx_62,
-	70: Shearstress_ptx_70,
-	72: Shearstress_ptx_72,
-	75: Shearstress_ptx_75}
+	70: Shearstress_ptx_70}
 
 // Shearstress PTX code for various compute capabilities.
 const (
-	Shearstress_ptx_30 = `
-.version 6.4
-.target sm_30
+	Shearstress_ptx_50 = `
+.version 8.4
+.target sm_50
 .address_size 64
 
 	// .globl	Shearstress
@@ -144,127 +138,26 @@ const (
 	mov.u32 	%r8, %ntid.x;
 	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
-	mad.lo.s32 	%r1, %r8, %r9, %r10;
-	mov.u32 	%r11, %ntid.y;
-	mov.u32 	%r12, %ctaid.y;
-	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
-	mov.u32 	%r14, %ntid.z;
-	mov.u32 	%r15, %ctaid.z;
-	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
-	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
-	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
-
-	mad.lo.s32 	%r17, %r3, %r6, %r2;
-	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
-
-	cvta.to.global.u64 	%rd8, %rd7;
-	mul.wide.s32 	%rd9, %r4, 4;
-	add.s64 	%rd10, %rd8, %rd9;
-	ld.global.f32 	%f4, [%rd10];
-	mul.f32 	%f14, %f4, %f14;
-
-BB0_3:
-	cvta.to.global.u64 	%rd11, %rd3;
-	cvta.to.global.u64 	%rd12, %rd6;
-	cvta.to.global.u64 	%rd13, %rd2;
-	cvta.to.global.u64 	%rd14, %rd5;
-	cvta.to.global.u64 	%rd15, %rd1;
-	cvta.to.global.u64 	%rd16, %rd4;
-	mul.wide.s32 	%rd17, %r4, 4;
-	add.s64 	%rd18, %rd16, %rd17;
-	ld.global.f32 	%f5, [%rd18];
-	add.f32 	%f6, %f5, %f5;
-	mul.f32 	%f7, %f14, %f6;
-	add.s64 	%rd19, %rd15, %rd17;
-	st.global.f32 	[%rd19], %f7;
-	add.s64 	%rd20, %rd14, %rd17;
-	ld.global.f32 	%f8, [%rd20];
-	add.f32 	%f9, %f8, %f8;
-	mul.f32 	%f10, %f14, %f9;
-	add.s64 	%rd21, %rd13, %rd17;
-	st.global.f32 	[%rd21], %f10;
-	add.s64 	%rd22, %rd12, %rd17;
-	ld.global.f32 	%f11, [%rd22];
-	add.f32 	%f12, %f11, %f11;
-	mul.f32 	%f13, %f14, %f12;
-	add.s64 	%rd23, %rd11, %rd17;
-	st.global.f32 	[%rd23], %f13;
-
-BB0_4:
-	ret;
-}
-
-
-`
-	Shearstress_ptx_32 = `
-.version 6.4
-.target sm_32
-.address_size 64
-
-	// .globl	Shearstress
-
-.visible .entry Shearstress(
-	.param .u64 Shearstress_param_0,
-	.param .u64 Shearstress_param_1,
-	.param .u64 Shearstress_param_2,
-	.param .u64 Shearstress_param_3,
-	.param .u64 Shearstress_param_4,
-	.param .u64 Shearstress_param_5,
-	.param .u32 Shearstress_param_6,
-	.param .u32 Shearstress_param_7,
-	.param .u32 Shearstress_param_8,
-	.param .u64 Shearstress_param_9,
-	.param .f32 Shearstress_param_10
-)
-{
-	.reg .pred 	%p<7>;
-	.reg .f32 	%f<15>;
-	.reg .b32 	%r<18>;
-	.reg .b64 	%rd<24>;
-
-
-	ld.param.u64 	%rd1, [Shearstress_param_0];
-	ld.param.u64 	%rd2, [Shearstress_param_1];
-	ld.param.u64 	%rd3, [Shearstress_param_2];
-	ld.param.u64 	%rd4, [Shearstress_param_3];
-	ld.param.u64 	%rd5, [Shearstress_param_4];
-	ld.param.u64 	%rd6, [Shearstress_param_5];
-	ld.param.u32 	%r5, [Shearstress_param_6];
-	ld.param.u32 	%r6, [Shearstress_param_7];
-	ld.param.u32 	%r7, [Shearstress_param_8];
-	ld.param.u64 	%rd7, [Shearstress_param_9];
-	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
-	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -272,7 +165,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -299,317 +192,14 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
+
 }
-
-
-`
-	Shearstress_ptx_35 = `
-.version 6.4
-.target sm_35
-.address_size 64
-
-	// .globl	Shearstress
-
-.visible .entry Shearstress(
-	.param .u64 Shearstress_param_0,
-	.param .u64 Shearstress_param_1,
-	.param .u64 Shearstress_param_2,
-	.param .u64 Shearstress_param_3,
-	.param .u64 Shearstress_param_4,
-	.param .u64 Shearstress_param_5,
-	.param .u32 Shearstress_param_6,
-	.param .u32 Shearstress_param_7,
-	.param .u32 Shearstress_param_8,
-	.param .u64 Shearstress_param_9,
-	.param .f32 Shearstress_param_10
-)
-{
-	.reg .pred 	%p<7>;
-	.reg .f32 	%f<15>;
-	.reg .b32 	%r<18>;
-	.reg .b64 	%rd<24>;
-
-
-	ld.param.u64 	%rd1, [Shearstress_param_0];
-	ld.param.u64 	%rd2, [Shearstress_param_1];
-	ld.param.u64 	%rd3, [Shearstress_param_2];
-	ld.param.u64 	%rd4, [Shearstress_param_3];
-	ld.param.u64 	%rd5, [Shearstress_param_4];
-	ld.param.u64 	%rd6, [Shearstress_param_5];
-	ld.param.u32 	%r5, [Shearstress_param_6];
-	ld.param.u32 	%r6, [Shearstress_param_7];
-	ld.param.u32 	%r7, [Shearstress_param_8];
-	ld.param.u64 	%rd7, [Shearstress_param_9];
-	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
-	mov.u32 	%r10, %tid.x;
-	mad.lo.s32 	%r1, %r9, %r8, %r10;
-	mov.u32 	%r11, %ntid.y;
-	mov.u32 	%r12, %ctaid.y;
-	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
-	mov.u32 	%r14, %ntid.z;
-	mov.u32 	%r15, %ctaid.z;
-	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
-	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
-	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
-
-	mad.lo.s32 	%r17, %r3, %r6, %r2;
-	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
-
-	cvta.to.global.u64 	%rd8, %rd7;
-	mul.wide.s32 	%rd9, %r4, 4;
-	add.s64 	%rd10, %rd8, %rd9;
-	ld.global.nc.f32 	%f4, [%rd10];
-	mul.f32 	%f14, %f4, %f14;
-
-BB0_3:
-	cvta.to.global.u64 	%rd11, %rd4;
-	mul.wide.s32 	%rd12, %r4, 4;
-	add.s64 	%rd13, %rd11, %rd12;
-	ld.global.nc.f32 	%f5, [%rd13];
-	add.f32 	%f6, %f5, %f5;
-	mul.f32 	%f7, %f14, %f6;
-	cvta.to.global.u64 	%rd14, %rd1;
-	add.s64 	%rd15, %rd14, %rd12;
-	st.global.f32 	[%rd15], %f7;
-	cvta.to.global.u64 	%rd16, %rd5;
-	add.s64 	%rd17, %rd16, %rd12;
-	ld.global.nc.f32 	%f8, [%rd17];
-	add.f32 	%f9, %f8, %f8;
-	mul.f32 	%f10, %f14, %f9;
-	cvta.to.global.u64 	%rd18, %rd2;
-	add.s64 	%rd19, %rd18, %rd12;
-	st.global.f32 	[%rd19], %f10;
-	cvta.to.global.u64 	%rd20, %rd6;
-	add.s64 	%rd21, %rd20, %rd12;
-	ld.global.nc.f32 	%f11, [%rd21];
-	add.f32 	%f12, %f11, %f11;
-	mul.f32 	%f13, %f14, %f12;
-	cvta.to.global.u64 	%rd22, %rd3;
-	add.s64 	%rd23, %rd22, %rd12;
-	st.global.f32 	[%rd23], %f13;
-
-BB0_4:
-	ret;
-}
-
-
-`
-	Shearstress_ptx_37 = `
-.version 6.4
-.target sm_37
-.address_size 64
-
-	// .globl	Shearstress
-
-.visible .entry Shearstress(
-	.param .u64 Shearstress_param_0,
-	.param .u64 Shearstress_param_1,
-	.param .u64 Shearstress_param_2,
-	.param .u64 Shearstress_param_3,
-	.param .u64 Shearstress_param_4,
-	.param .u64 Shearstress_param_5,
-	.param .u32 Shearstress_param_6,
-	.param .u32 Shearstress_param_7,
-	.param .u32 Shearstress_param_8,
-	.param .u64 Shearstress_param_9,
-	.param .f32 Shearstress_param_10
-)
-{
-	.reg .pred 	%p<7>;
-	.reg .f32 	%f<15>;
-	.reg .b32 	%r<18>;
-	.reg .b64 	%rd<24>;
-
-
-	ld.param.u64 	%rd1, [Shearstress_param_0];
-	ld.param.u64 	%rd2, [Shearstress_param_1];
-	ld.param.u64 	%rd3, [Shearstress_param_2];
-	ld.param.u64 	%rd4, [Shearstress_param_3];
-	ld.param.u64 	%rd5, [Shearstress_param_4];
-	ld.param.u64 	%rd6, [Shearstress_param_5];
-	ld.param.u32 	%r5, [Shearstress_param_6];
-	ld.param.u32 	%r6, [Shearstress_param_7];
-	ld.param.u32 	%r7, [Shearstress_param_8];
-	ld.param.u64 	%rd7, [Shearstress_param_9];
-	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
-	mov.u32 	%r10, %tid.x;
-	mad.lo.s32 	%r1, %r9, %r8, %r10;
-	mov.u32 	%r11, %ntid.y;
-	mov.u32 	%r12, %ctaid.y;
-	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
-	mov.u32 	%r14, %ntid.z;
-	mov.u32 	%r15, %ctaid.z;
-	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
-	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
-	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
-
-	mad.lo.s32 	%r17, %r3, %r6, %r2;
-	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
-
-	cvta.to.global.u64 	%rd8, %rd7;
-	mul.wide.s32 	%rd9, %r4, 4;
-	add.s64 	%rd10, %rd8, %rd9;
-	ld.global.nc.f32 	%f4, [%rd10];
-	mul.f32 	%f14, %f4, %f14;
-
-BB0_3:
-	cvta.to.global.u64 	%rd11, %rd4;
-	mul.wide.s32 	%rd12, %r4, 4;
-	add.s64 	%rd13, %rd11, %rd12;
-	ld.global.nc.f32 	%f5, [%rd13];
-	add.f32 	%f6, %f5, %f5;
-	mul.f32 	%f7, %f14, %f6;
-	cvta.to.global.u64 	%rd14, %rd1;
-	add.s64 	%rd15, %rd14, %rd12;
-	st.global.f32 	[%rd15], %f7;
-	cvta.to.global.u64 	%rd16, %rd5;
-	add.s64 	%rd17, %rd16, %rd12;
-	ld.global.nc.f32 	%f8, [%rd17];
-	add.f32 	%f9, %f8, %f8;
-	mul.f32 	%f10, %f14, %f9;
-	cvta.to.global.u64 	%rd18, %rd2;
-	add.s64 	%rd19, %rd18, %rd12;
-	st.global.f32 	[%rd19], %f10;
-	cvta.to.global.u64 	%rd20, %rd6;
-	add.s64 	%rd21, %rd20, %rd12;
-	ld.global.nc.f32 	%f11, [%rd21];
-	add.f32 	%f12, %f11, %f11;
-	mul.f32 	%f13, %f14, %f12;
-	cvta.to.global.u64 	%rd22, %rd3;
-	add.s64 	%rd23, %rd22, %rd12;
-	st.global.f32 	[%rd23], %f13;
-
-BB0_4:
-	ret;
-}
-
-
-`
-	Shearstress_ptx_50 = `
-.version 6.4
-.target sm_50
-.address_size 64
-
-	// .globl	Shearstress
-
-.visible .entry Shearstress(
-	.param .u64 Shearstress_param_0,
-	.param .u64 Shearstress_param_1,
-	.param .u64 Shearstress_param_2,
-	.param .u64 Shearstress_param_3,
-	.param .u64 Shearstress_param_4,
-	.param .u64 Shearstress_param_5,
-	.param .u32 Shearstress_param_6,
-	.param .u32 Shearstress_param_7,
-	.param .u32 Shearstress_param_8,
-	.param .u64 Shearstress_param_9,
-	.param .f32 Shearstress_param_10
-)
-{
-	.reg .pred 	%p<7>;
-	.reg .f32 	%f<15>;
-	.reg .b32 	%r<18>;
-	.reg .b64 	%rd<24>;
-
-
-	ld.param.u64 	%rd1, [Shearstress_param_0];
-	ld.param.u64 	%rd2, [Shearstress_param_1];
-	ld.param.u64 	%rd3, [Shearstress_param_2];
-	ld.param.u64 	%rd4, [Shearstress_param_3];
-	ld.param.u64 	%rd5, [Shearstress_param_4];
-	ld.param.u64 	%rd6, [Shearstress_param_5];
-	ld.param.u32 	%r5, [Shearstress_param_6];
-	ld.param.u32 	%r6, [Shearstress_param_7];
-	ld.param.u32 	%r7, [Shearstress_param_8];
-	ld.param.u64 	%rd7, [Shearstress_param_9];
-	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
-	mov.u32 	%r10, %tid.x;
-	mad.lo.s32 	%r1, %r9, %r8, %r10;
-	mov.u32 	%r11, %ntid.y;
-	mov.u32 	%r12, %ctaid.y;
-	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
-	mov.u32 	%r14, %ntid.z;
-	mov.u32 	%r15, %ctaid.z;
-	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
-	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
-	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
-
-	mad.lo.s32 	%r17, %r3, %r6, %r2;
-	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
-
-	cvta.to.global.u64 	%rd8, %rd7;
-	mul.wide.s32 	%rd9, %r4, 4;
-	add.s64 	%rd10, %rd8, %rd9;
-	ld.global.nc.f32 	%f4, [%rd10];
-	mul.f32 	%f14, %f4, %f14;
-
-BB0_3:
-	cvta.to.global.u64 	%rd11, %rd4;
-	mul.wide.s32 	%rd12, %r4, 4;
-	add.s64 	%rd13, %rd11, %rd12;
-	ld.global.nc.f32 	%f5, [%rd13];
-	add.f32 	%f6, %f5, %f5;
-	mul.f32 	%f7, %f14, %f6;
-	cvta.to.global.u64 	%rd14, %rd1;
-	add.s64 	%rd15, %rd14, %rd12;
-	st.global.f32 	[%rd15], %f7;
-	cvta.to.global.u64 	%rd16, %rd5;
-	add.s64 	%rd17, %rd16, %rd12;
-	ld.global.nc.f32 	%f8, [%rd17];
-	add.f32 	%f9, %f8, %f8;
-	mul.f32 	%f10, %f14, %f9;
-	cvta.to.global.u64 	%rd18, %rd2;
-	add.s64 	%rd19, %rd18, %rd12;
-	st.global.f32 	[%rd19], %f10;
-	cvta.to.global.u64 	%rd20, %rd6;
-	add.s64 	%rd21, %rd20, %rd12;
-	ld.global.nc.f32 	%f11, [%rd21];
-	add.f32 	%f12, %f11, %f11;
-	mul.f32 	%f13, %f14, %f12;
-	cvta.to.global.u64 	%rd22, %rd3;
-	add.s64 	%rd23, %rd22, %rd12;
-	st.global.f32 	[%rd23], %f13;
-
-BB0_4:
-	ret;
-}
-
 
 `
 	Shearstress_ptx_52 = `
-.version 6.4
+.version 8.4
 .target sm_52
 .address_size 64
 
@@ -646,29 +236,29 @@ BB0_4:
 	ld.param.u32 	%r7, [Shearstress_param_8];
 	ld.param.u64 	%rd7, [Shearstress_param_9];
 	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
+	mov.u32 	%r8, %ntid.x;
+	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -676,7 +266,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -703,14 +293,14 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
-}
 
+}
 
 `
 	Shearstress_ptx_53 = `
-.version 6.4
+.version 8.4
 .target sm_53
 .address_size 64
 
@@ -747,29 +337,29 @@ BB0_4:
 	ld.param.u32 	%r7, [Shearstress_param_8];
 	ld.param.u64 	%rd7, [Shearstress_param_9];
 	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
+	mov.u32 	%r8, %ntid.x;
+	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -777,7 +367,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -804,14 +394,14 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
-}
 
+}
 
 `
 	Shearstress_ptx_60 = `
-.version 6.4
+.version 8.4
 .target sm_60
 .address_size 64
 
@@ -848,29 +438,29 @@ BB0_4:
 	ld.param.u32 	%r7, [Shearstress_param_8];
 	ld.param.u64 	%rd7, [Shearstress_param_9];
 	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
+	mov.u32 	%r8, %ntid.x;
+	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -878,7 +468,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -905,14 +495,14 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
-}
 
+}
 
 `
 	Shearstress_ptx_61 = `
-.version 6.4
+.version 8.4
 .target sm_61
 .address_size 64
 
@@ -949,29 +539,29 @@ BB0_4:
 	ld.param.u32 	%r7, [Shearstress_param_8];
 	ld.param.u64 	%rd7, [Shearstress_param_9];
 	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
+	mov.u32 	%r8, %ntid.x;
+	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -979,7 +569,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -1006,14 +596,14 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
-}
 
+}
 
 `
 	Shearstress_ptx_62 = `
-.version 6.4
+.version 8.4
 .target sm_62
 .address_size 64
 
@@ -1050,29 +640,29 @@ BB0_4:
 	ld.param.u32 	%r7, [Shearstress_param_8];
 	ld.param.u64 	%rd7, [Shearstress_param_9];
 	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
+	mov.u32 	%r8, %ntid.x;
+	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -1080,7 +670,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -1107,14 +697,14 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
-}
 
+}
 
 `
 	Shearstress_ptx_70 = `
-.version 6.4
+.version 8.4
 .target sm_70
 .address_size 64
 
@@ -1151,29 +741,29 @@ BB0_4:
 	ld.param.u32 	%r7, [Shearstress_param_8];
 	ld.param.u64 	%rd7, [Shearstress_param_9];
 	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
+	mov.u32 	%r8, %ntid.x;
+	mov.u32 	%r9, %ctaid.x;
 	mov.u32 	%r10, %tid.x;
 	mad.lo.s32 	%r1, %r9, %r8, %r10;
 	mov.u32 	%r11, %ntid.y;
 	mov.u32 	%r12, %ctaid.y;
 	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
+	mad.lo.s32 	%r2, %r12, %r11, %r13;
 	mov.u32 	%r14, %ntid.z;
 	mov.u32 	%r15, %ctaid.z;
 	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
+	mad.lo.s32 	%r3, %r15, %r14, %r16;
+	setp.ge.s32 	%p1, %r1, %r5;
+	setp.ge.s32 	%p2, %r2, %r6;
 	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
+	setp.ge.s32 	%p4, %r3, %r7;
 	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
+	@%p5 bra 	$L__BB0_4;
 
 	mad.lo.s32 	%r17, %r3, %r6, %r2;
 	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
+	setp.eq.s64 	%p6, %rd7, 0;
+	@%p6 bra 	$L__BB0_3;
 
 	cvta.to.global.u64 	%rd8, %rd7;
 	mul.wide.s32 	%rd9, %r4, 4;
@@ -1181,7 +771,7 @@ BB0_4:
 	ld.global.nc.f32 	%f4, [%rd10];
 	mul.f32 	%f14, %f4, %f14;
 
-BB0_3:
+$L__BB0_3:
 	cvta.to.global.u64 	%rd11, %rd4;
 	mul.wide.s32 	%rd12, %r4, 4;
 	add.s64 	%rd13, %rd11, %rd12;
@@ -1208,212 +798,10 @@ BB0_3:
 	add.s64 	%rd23, %rd22, %rd12;
 	st.global.f32 	[%rd23], %f13;
 
-BB0_4:
+$L__BB0_4:
 	ret;
+
 }
-
-
-`
-	Shearstress_ptx_72 = `
-.version 6.4
-.target sm_72
-.address_size 64
-
-	// .globl	Shearstress
-
-.visible .entry Shearstress(
-	.param .u64 Shearstress_param_0,
-	.param .u64 Shearstress_param_1,
-	.param .u64 Shearstress_param_2,
-	.param .u64 Shearstress_param_3,
-	.param .u64 Shearstress_param_4,
-	.param .u64 Shearstress_param_5,
-	.param .u32 Shearstress_param_6,
-	.param .u32 Shearstress_param_7,
-	.param .u32 Shearstress_param_8,
-	.param .u64 Shearstress_param_9,
-	.param .f32 Shearstress_param_10
-)
-{
-	.reg .pred 	%p<7>;
-	.reg .f32 	%f<15>;
-	.reg .b32 	%r<18>;
-	.reg .b64 	%rd<24>;
-
-
-	ld.param.u64 	%rd1, [Shearstress_param_0];
-	ld.param.u64 	%rd2, [Shearstress_param_1];
-	ld.param.u64 	%rd3, [Shearstress_param_2];
-	ld.param.u64 	%rd4, [Shearstress_param_3];
-	ld.param.u64 	%rd5, [Shearstress_param_4];
-	ld.param.u64 	%rd6, [Shearstress_param_5];
-	ld.param.u32 	%r5, [Shearstress_param_6];
-	ld.param.u32 	%r6, [Shearstress_param_7];
-	ld.param.u32 	%r7, [Shearstress_param_8];
-	ld.param.u64 	%rd7, [Shearstress_param_9];
-	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
-	mov.u32 	%r10, %tid.x;
-	mad.lo.s32 	%r1, %r9, %r8, %r10;
-	mov.u32 	%r11, %ntid.y;
-	mov.u32 	%r12, %ctaid.y;
-	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
-	mov.u32 	%r14, %ntid.z;
-	mov.u32 	%r15, %ctaid.z;
-	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
-	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
-	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
-
-	mad.lo.s32 	%r17, %r3, %r6, %r2;
-	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
-
-	cvta.to.global.u64 	%rd8, %rd7;
-	mul.wide.s32 	%rd9, %r4, 4;
-	add.s64 	%rd10, %rd8, %rd9;
-	ld.global.nc.f32 	%f4, [%rd10];
-	mul.f32 	%f14, %f4, %f14;
-
-BB0_3:
-	cvta.to.global.u64 	%rd11, %rd4;
-	mul.wide.s32 	%rd12, %r4, 4;
-	add.s64 	%rd13, %rd11, %rd12;
-	ld.global.nc.f32 	%f5, [%rd13];
-	add.f32 	%f6, %f5, %f5;
-	mul.f32 	%f7, %f14, %f6;
-	cvta.to.global.u64 	%rd14, %rd1;
-	add.s64 	%rd15, %rd14, %rd12;
-	st.global.f32 	[%rd15], %f7;
-	cvta.to.global.u64 	%rd16, %rd5;
-	add.s64 	%rd17, %rd16, %rd12;
-	ld.global.nc.f32 	%f8, [%rd17];
-	add.f32 	%f9, %f8, %f8;
-	mul.f32 	%f10, %f14, %f9;
-	cvta.to.global.u64 	%rd18, %rd2;
-	add.s64 	%rd19, %rd18, %rd12;
-	st.global.f32 	[%rd19], %f10;
-	cvta.to.global.u64 	%rd20, %rd6;
-	add.s64 	%rd21, %rd20, %rd12;
-	ld.global.nc.f32 	%f11, [%rd21];
-	add.f32 	%f12, %f11, %f11;
-	mul.f32 	%f13, %f14, %f12;
-	cvta.to.global.u64 	%rd22, %rd3;
-	add.s64 	%rd23, %rd22, %rd12;
-	st.global.f32 	[%rd23], %f13;
-
-BB0_4:
-	ret;
-}
-
-
-`
-	Shearstress_ptx_75 = `
-.version 6.4
-.target sm_75
-.address_size 64
-
-	// .globl	Shearstress
-
-.visible .entry Shearstress(
-	.param .u64 Shearstress_param_0,
-	.param .u64 Shearstress_param_1,
-	.param .u64 Shearstress_param_2,
-	.param .u64 Shearstress_param_3,
-	.param .u64 Shearstress_param_4,
-	.param .u64 Shearstress_param_5,
-	.param .u32 Shearstress_param_6,
-	.param .u32 Shearstress_param_7,
-	.param .u32 Shearstress_param_8,
-	.param .u64 Shearstress_param_9,
-	.param .f32 Shearstress_param_10
-)
-{
-	.reg .pred 	%p<7>;
-	.reg .f32 	%f<15>;
-	.reg .b32 	%r<18>;
-	.reg .b64 	%rd<24>;
-
-
-	ld.param.u64 	%rd1, [Shearstress_param_0];
-	ld.param.u64 	%rd2, [Shearstress_param_1];
-	ld.param.u64 	%rd3, [Shearstress_param_2];
-	ld.param.u64 	%rd4, [Shearstress_param_3];
-	ld.param.u64 	%rd5, [Shearstress_param_4];
-	ld.param.u64 	%rd6, [Shearstress_param_5];
-	ld.param.u32 	%r5, [Shearstress_param_6];
-	ld.param.u32 	%r6, [Shearstress_param_7];
-	ld.param.u32 	%r7, [Shearstress_param_8];
-	ld.param.u64 	%rd7, [Shearstress_param_9];
-	ld.param.f32 	%f14, [Shearstress_param_10];
-	mov.u32 	%r8, %ctaid.x;
-	mov.u32 	%r9, %ntid.x;
-	mov.u32 	%r10, %tid.x;
-	mad.lo.s32 	%r1, %r9, %r8, %r10;
-	mov.u32 	%r11, %ntid.y;
-	mov.u32 	%r12, %ctaid.y;
-	mov.u32 	%r13, %tid.y;
-	mad.lo.s32 	%r2, %r11, %r12, %r13;
-	mov.u32 	%r14, %ntid.z;
-	mov.u32 	%r15, %ctaid.z;
-	mov.u32 	%r16, %tid.z;
-	mad.lo.s32 	%r3, %r14, %r15, %r16;
-	setp.ge.s32	%p1, %r2, %r6;
-	setp.ge.s32	%p2, %r1, %r5;
-	or.pred  	%p3, %p1, %p2;
-	setp.ge.s32	%p4, %r3, %r7;
-	or.pred  	%p5, %p3, %p4;
-	@%p5 bra 	BB0_4;
-
-	mad.lo.s32 	%r17, %r3, %r6, %r2;
-	mad.lo.s32 	%r4, %r17, %r5, %r1;
-	setp.eq.s64	%p6, %rd7, 0;
-	@%p6 bra 	BB0_3;
-
-	cvta.to.global.u64 	%rd8, %rd7;
-	mul.wide.s32 	%rd9, %r4, 4;
-	add.s64 	%rd10, %rd8, %rd9;
-	ld.global.nc.f32 	%f4, [%rd10];
-	mul.f32 	%f14, %f4, %f14;
-
-BB0_3:
-	cvta.to.global.u64 	%rd11, %rd4;
-	mul.wide.s32 	%rd12, %r4, 4;
-	add.s64 	%rd13, %rd11, %rd12;
-	ld.global.nc.f32 	%f5, [%rd13];
-	add.f32 	%f6, %f5, %f5;
-	mul.f32 	%f7, %f14, %f6;
-	cvta.to.global.u64 	%rd14, %rd1;
-	add.s64 	%rd15, %rd14, %rd12;
-	st.global.f32 	[%rd15], %f7;
-	cvta.to.global.u64 	%rd16, %rd5;
-	add.s64 	%rd17, %rd16, %rd12;
-	ld.global.nc.f32 	%f8, [%rd17];
-	add.f32 	%f9, %f8, %f8;
-	mul.f32 	%f10, %f14, %f9;
-	cvta.to.global.u64 	%rd18, %rd2;
-	add.s64 	%rd19, %rd18, %rd12;
-	st.global.f32 	[%rd19], %f10;
-	cvta.to.global.u64 	%rd20, %rd6;
-	add.s64 	%rd21, %rd20, %rd12;
-	ld.global.nc.f32 	%f11, [%rd21];
-	add.f32 	%f12, %f11, %f11;
-	mul.f32 	%f13, %f14, %f12;
-	cvta.to.global.u64 	%rd22, %rd3;
-	add.s64 	%rd23, %rd22, %rd12;
-	st.global.f32 	[%rd23], %f13;
-
-BB0_4:
-	ret;
-}
-
 
 `
 )

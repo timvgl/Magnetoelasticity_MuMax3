@@ -32,7 +32,7 @@ endif
 
 # When CUDA_CC is not an environment variable and is not set on the command line, use compute capability 3.0
 ifeq ($(CUDA_CC),)
-    CUDA_CC = 30
+    CUDA_CC = 50 52 53 60 61 62 70
 endif
 
 # The gcc host compiler for nvcc
