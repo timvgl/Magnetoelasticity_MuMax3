@@ -59,7 +59,6 @@ __device__ int mapIndex(int iExt, int N, bool pbcFlag) {
     // Check if thread is within extended array bounds
     if (xExt >= NxExt || yExt >= NyExt || zExt >= NzExt)
         return;
-
     int x = mapIndex(xExt, Nx, PBCx);
     int y = mapIndex(yExt, Ny, PBCy);
     int z = mapIndex(zExt, Nz, PBCz);

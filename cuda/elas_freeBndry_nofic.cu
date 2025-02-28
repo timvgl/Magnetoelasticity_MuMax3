@@ -41,7 +41,6 @@ Elastos(float* __restrict__ dux, float* __restrict__ duy, float* __restrict__ du
         return ;
     }
 
-
     //################################
     //x-interface
     if (ix==0 && PBCx==0) {
@@ -485,7 +484,7 @@ Elastos(float* __restrict__ dux, float* __restrict__ duy, float* __restrict__ du
         cc_ = make_float3(amul(C1_, C1_mul, I_),amul(C3_, C3_mul, I_), amul(C3_, C3_mul, I_));
         cc_ = 0.5*(cc+cc_);
         d_ = wx*wx*had(cc_,(u_-u0));
-        //Left neighbou
+        //Left neighbor
         I_ = idx(lclampx(ix-1), iy, iz);
         u_ = make_float3(ux[I_], uy[I_], uz[I_]);
         cc_ = make_float3(amul(C1_, C1_mul, I_),amul(C3_, C3_mul, I_), amul(C3_, C3_mul, I_));

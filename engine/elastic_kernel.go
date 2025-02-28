@@ -22,17 +22,23 @@ func calcSecondDerivDisp(dst *data.Slice) {
 	if GhostNodes {
 		uMesh := MeshOf(&U)
 		u := cuda.SetGhostCells(U.Buffer(), uMesh)
+		defer cuda.Recycle(u)
+
 		c1 := C11.MSlice()
 		defer c1.Recycle()
 		c11 := cuda.SetGhostCellsParameters(c1, C11.Mesh())
+		defer c11.Recycle()
 
 		c2 := C12.MSlice()
 		defer c2.Recycle()
 		c22 := cuda.SetGhostCellsParameters(c2, C12.Mesh())
+		defer c22.Recycle()
 
 		c3 := C44.MSlice()
 		defer c3.Recycle()
 		c33 := cuda.SetGhostCellsParameters(c3, C44.Mesh())
+		defer c33.Recycle()
+
 		dstGhost := cuda.Buffer(u.NComp(), u.Size())
 		SecondDerivative(dstGhost, u, c11, c22, c33)
 		offsetX := 0
@@ -48,6 +54,7 @@ func calcSecondDerivDisp(dst *data.Slice) {
 			offsetZ += 1
 		}
 		cuda.Crop(dst, dstGhost, offsetX, offsetY, offsetZ)
+		cuda.Recycle(dstGhost)
 	} else {
 		c1 := C11.MSlice()
 		defer c1.Recycle()

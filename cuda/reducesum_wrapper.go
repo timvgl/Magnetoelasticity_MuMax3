@@ -77,7 +77,7 @@ var reducesum_map = map[int]string{0: "",
 // reducesum PTX code for various compute capabilities.
 const (
 	reducesum_ptx_50 = `
-.version 8.4
+.version 8.5
 .target sm_50
 .address_size 64
 
@@ -224,7 +224,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;
@@ -233,7 +233,7 @@ $L__BB0_15:
 
 `
 	reducesum_ptx_52 = `
-.version 8.4
+.version 8.5
 .target sm_52
 .address_size 64
 
@@ -380,7 +380,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;
@@ -389,7 +389,7 @@ $L__BB0_15:
 
 `
 	reducesum_ptx_53 = `
-.version 8.4
+.version 8.5
 .target sm_53
 .address_size 64
 
@@ -536,7 +536,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;
@@ -545,7 +545,7 @@ $L__BB0_15:
 
 `
 	reducesum_ptx_60 = `
-.version 8.4
+.version 8.5
 .target sm_60
 .address_size 64
 
@@ -692,7 +692,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;
@@ -701,7 +701,7 @@ $L__BB0_15:
 
 `
 	reducesum_ptx_61 = `
-.version 8.4
+.version 8.5
 .target sm_61
 .address_size 64
 
@@ -848,7 +848,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;
@@ -857,7 +857,7 @@ $L__BB0_15:
 
 `
 	reducesum_ptx_62 = `
-.version 8.4
+.version 8.5
 .target sm_62
 .address_size 64
 
@@ -1004,7 +1004,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;
@@ -1013,7 +1013,7 @@ $L__BB0_15:
 
 `
 	reducesum_ptx_70 = `
-.version 8.4
+.version 8.5
 .target sm_70
 .address_size 64
 
@@ -1160,7 +1160,7 @@ $L__BB0_13:
 
 	ld.shared.f32 	%f39, [_ZZ9reducesumE5sdata];
 	cvta.to.global.u64 	%rd15, %rd7;
-	red.global.add.f32 	[%rd15], %f39;
+	atom.global.add.f32 	%f40, [%rd15], %f39;
 
 $L__BB0_15:
 	ret;

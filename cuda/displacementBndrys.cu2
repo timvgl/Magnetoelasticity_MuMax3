@@ -1,0 +1,182 @@
+#include "stencil.h"
+#include <stdint.h>
+#include <stdio.h>
+
+// Extended index mapping for interior points remains the same as before.
+__device__ int mapInteriorIndex(int iExt, int N, bool pbcFlag) {
+    // When no ghost layer is present (periodic), no shift.
+    // Otherwise, subtract one.
+    int i = pbcFlag ? iExt : (iExt - 1);
+    if (i < 0)  i = 0;
+    if (i >= N) i = N - 1;
+    return i;
+}
+
+/**
+ * createExtended3DField:
+ * Copies a 3D displacement field (ux, uy, uz) of size (Nx, Ny, Nz) into
+ * an extended field (uxExt, uyExt, uzExt) whose size is determined by the
+ * periodic boundary condition (PBC) flags.
+ *
+ *  - If PBCx == true, then the x-dimension is not extended (no ghost nodes).
+ *  - If PBCx == false, then the x-dimension is extended by 2 (one ghost cell on each side).
+ *  - The same logic applies to y and z with PBCy and PBCz.
+ *
+ * Thus, NxExt = Nx + (PBCx ? 0 : 2),
+ *      NyExt = Ny + (PBCy ? 0 : 2),
+ *      NzExt = Nz + (PBCz ? 0 : 2).
+ *
+ * To enforce zero second derivative at the boundaries, the ghost cells are
+ * not filled by a simple copy (which would make the first derivative vanish)
+ * but instead by extrapolating:
+ *
+ *   For the lower face in a given dimension:
+ *       ghost = 2 * u(boundary) - u(adjacent)
+ *
+ *   and similarly for the upper face.
+ *
+ * In this implementation, if more than one face is ghost (i.e. an edge or corner),
+ * we apply the ghost extrapolation for the first applicable dimension in the order x, then y, then z.
+ *
+ * Inputs:
+ *  - ux, uy, uz: original displacement fields (size Nx*Ny*Nz).
+ *  - Nx, Ny, Nz: dimensions of the original field.
+ *  - PBC: a bitmask (with bits 1,2,4 for x, y, z) indicating periodic boundaries.
+ *
+ * Outputs:
+ *  - uxExt, uyExt, uzExt: extended displacement fields with size NxExt*NyExt*NzExt,
+ *    allocated by the user.
+ */
+extern "C" __global__ void
+createExtended3DField(
+    float* __restrict__ uxExt,
+    float* __restrict__ uyExt,
+    float* __restrict__ uzExt,
+    float* __restrict__ ux,
+    float* __restrict__ uy,
+    float* __restrict__ uz,
+    int Nx, int Ny, int Nz,
+    uint8_t PBC)
+{
+    // The macros from stencil.h define:
+    //   PBCx = (PBC & 1)
+    //   PBCy = (PBC & 2)
+    //   PBCz = (PBC & 4)
+    // Extended dimensions:
+    int NxExt = Nx + (PBCx ? 0 : 2);
+    int NyExt = Ny + (PBCy ? 0 : 2);
+    int NzExt = Nz + (PBCz ? 0 : 2);
+
+    // Extended grid coordinates
+    int xExt = blockIdx.x * blockDim.x + threadIdx.x;
+    int yExt = blockIdx.y * blockDim.y + threadIdx.y;
+    int zExt = blockIdx.z * blockDim.z + threadIdx.z;
+
+    // Only process threads that fall into the extended array
+    if (xExt >= NxExt || yExt >= NyExt || zExt >= NzExt) {
+        return;
+    }
+
+    int newIdx = index(xExt, yExt, zExt, NxExt, NyExt, NzExt);
+
+    // We'll compute the extended value for each component.
+    // Our strategy is:
+    //   (a) If a coordinate in a non-periodic dimension falls on a ghost layer,
+    //       compute the extrapolated value in that dimension.
+    //   (b) Otherwise, map the extended index to the interior using: interior = iExt - 1.
+    //
+    // In the following, we check for ghost cells in x, then y, then z.
+    // (In a more refined scheme, one might combine multiple ghost conditions, but here
+    // we give priority in the order x, then y, then z.)
+
+    float valUx, valUy, valUz;
+    bool done = false; // flag if a ghost extrapolation was applied
+
+    // --- Check x-direction ghost conditions (if non-periodic) ---
+    if (!PBCx) {
+        if (xExt == 0) {
+            // Lower ghost in x:
+            // uExt = 2*u(0, y, z) - u(1, y, z)
+            int y_in = mapInteriorIndex(yExt, Ny, PBCy);
+            int z_in = mapInteriorIndex(zExt, Nz, PBCz);
+            int idx0 = index(0, y_in, z_in, Nx, Ny, Nz);
+            int idx1 = (Nx > 1 ? index(1, y_in, z_in, Nx, Ny, Nz) : idx0);
+            valUx = 2.0f * ux[idx0] - ux[idx1];
+            valUy = 2.0f * uy[idx0] - uy[idx1];
+            valUz = 2.0f * uz[idx0] - uz[idx1];
+            done = true;
+        } else if (xExt == NxExt - 1) {
+            // Upper ghost in x:
+            int y_in = mapInteriorIndex(yExt, Ny, PBCy);
+            int z_in = mapInteriorIndex(zExt, Nz, PBCz);
+            int idx0 = index(Nx - 1, y_in, z_in, Nx, Ny, Nz);
+            int idx1 = (Nx > 1 ? index(Nx - 2, y_in, z_in, Nx, Ny, Nz) : idx0);
+            valUx = 2.0f * ux[idx0] - ux[idx1];
+            valUy = 2.0f * uy[idx0] - uy[idx1];
+            valUz = 2.0f * uz[idx0] - uz[idx1];
+            done = true;
+        }
+    }
+
+    // --- Check y-direction ghost conditions if not already handled ---
+    if (!done && !PBCy) {
+        if (yExt == 0) {
+            int x_in = mapInteriorIndex(xExt, Nx, PBCx);
+            int z_in = mapInteriorIndex(zExt, Nz, PBCz);
+            int idx0 = index(x_in, 0, z_in, Nx, Ny, Nz);
+            int idx1 = (Ny > 1 ? index(x_in, 1, z_in, Nx, Ny, Nz) : idx0);
+            valUx = 2.0f * ux[idx0] - ux[idx1];
+            valUy = 2.0f * uy[idx0] - uy[idx1];
+            valUz = 2.0f * uz[idx0] - uz[idx1];
+            done = true;
+        } else if (yExt == NyExt - 1) {
+            int x_in = mapInteriorIndex(xExt, Nx, PBCx);
+            int z_in = mapInteriorIndex(zExt, Nz, PBCz);
+            int idx0 = index(x_in, Ny - 1, z_in, Nx, Ny, Nz);
+            int idx1 = (Ny > 1 ? index(x_in, Ny - 2, z_in, Nx, Ny, Nz) : idx0);
+            valUx = 2.0f * ux[idx0] - ux[idx1];
+            valUy = 2.0f * uy[idx0] - uy[idx1];
+            valUz = 2.0f * uz[idx0] - uz[idx1];
+            done = true;
+        }
+    }
+
+    // --- Check z-direction ghost conditions if not already handled ---
+    if (!done && !PBCz) {
+        if (zExt == 0) {
+            int x_in = mapInteriorIndex(xExt, Nx, PBCx);
+            int y_in = mapInteriorIndex(yExt, Ny, PBCy);
+            int idx0 = index(x_in, y_in, 0, Nx, Ny, Nz);
+            int idx1 = (Nz > 1 ? index(x_in, y_in, 1, Nx, Ny, Nz) : idx0);
+            valUx = 2.0f * ux[idx0] - ux[idx1];
+            valUy = 2.0f * uy[idx0] - uy[idx1];
+            valUz = 2.0f * uz[idx0] - uz[idx1];
+            done = true;
+        } else if (zExt == NzExt - 1) {
+            int x_in = mapInteriorIndex(xExt, Nx, PBCx);
+            int y_in = mapInteriorIndex(yExt, Ny, PBCy);
+            int idx0 = index(x_in, y_in, Nz - 1, Nx, Ny, Nz);
+            int idx1 = (Nz > 1 ? index(x_in, y_in, Nz - 2, Nx, Ny, Nz) : idx0);
+            valUx = 2.0f * ux[idx0] - ux[idx1];
+            valUy = 2.0f * uy[idx0] - uy[idx1];
+            valUz = 2.0f * uz[idx0] - uz[idx1];
+            done = true;
+        }
+    }
+
+    // --- If no ghost condition applied in any dimension, we are in the interior ---
+    if (!done) {
+        int x_in = mapInteriorIndex(xExt, Nx, PBCx);
+        int y_in = mapInteriorIndex(yExt, Ny, PBCy);
+        int z_in = mapInteriorIndex(zExt, Nz, PBCz);
+        int idx0 = index(x_in, y_in, z_in, Nx, Ny, Nz);
+        valUx = ux[idx0];
+        valUy = uy[idx0];
+        valUz = uz[idx0];
+    }
+
+    // Write the computed extended values.
+    uxExt[newIdx] = valUx;
+    uyExt[newIdx] = valUy;
+    uzExt[newIdx] = valUz;
+}

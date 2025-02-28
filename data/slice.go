@@ -5,10 +5,11 @@ package data
 import (
 	"bytes"
 	"fmt"
-	"github.com/mumax/3/util"
 	"log"
 	"reflect"
 	"unsafe"
+
+	"github.com/mumax/3/util"
 )
 
 // Slice is like a [][]float32, but may be stored in GPU or host memory.
@@ -63,6 +64,20 @@ func SliceFromArray(data [][]float32, size [3]int) *Slice {
 // Return a slice without underlying storage. Used to represent a mask containing all 1's.
 func NilSlice(nComp int, size [3]int) *Slice {
 	return SliceFromPtrs(size, GPUMemory, make([]unsafe.Pointer, nComp))
+}
+
+func (s *Slice) IsMemoryAllocated() bool {
+	if s == nil {
+		return false
+	}
+	for _, p := range s.ptrs {
+		if p == nil {
+			// You might want to log which component is nil for debugging:
+			// fmt.Printf("Component %d has no memory assigned\n", i)
+			return false
+		}
+	}
+	return true
 }
 
 // Internal: construct a Slice using bare memory pointers.
